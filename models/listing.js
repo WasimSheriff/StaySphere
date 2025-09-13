@@ -8,12 +8,12 @@ const listingSchema=new Schema({
     },
     description:String,
     image:{
-        filename:String,
-        url:{
-            type:String,
-            default:"https://www.istockphoto.com/photos/error-404",
-            set:(v)=>v==="https://www.istockphoto.com/photos/error-404"?"":v,
-        }
+        type:String,
+        default:
+            "https://www.istockphoto.com/photos/error-404",
+        set:(v)=>
+            v===""?"https://www.istockphoto.com/photos/error-404":v,
+        
     },
     price:Number,
     location:String,
