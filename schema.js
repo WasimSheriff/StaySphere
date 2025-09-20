@@ -1,6 +1,7 @@
 /* for valiadtion */
 /* comes->validate */
 
+//listing Schema
 const Joi=require('joi')
 module.exports.listingSchema=Joi.object({
     listing:Joi.object({
@@ -10,5 +11,13 @@ module.exports.listingSchema=Joi.object({
         country:Joi.string().required(),
         price:Joi.number().required().min(0),
         image:Joi.string().allow("",null),
+    }).required(),
+})
+
+//review Schema
+module.exports.reviewSchema=Joi.object({
+    review:Joi.object({
+        rating:Joi.number().min(1).max(5).required(),
+        comment:Joi.string().required(),
     }).required(),
 })
