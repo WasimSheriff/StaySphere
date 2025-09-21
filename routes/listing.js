@@ -30,6 +30,10 @@ router.get("/new",(req,res)=>{
 router.get("/:id",wrapAsync( async(req,res)=>{
     let {id}=req.params;
     const listing=await Listing.findById(id).populate("reviews"); // populate is used for shoeing all the reviews in the listing instead of the object Id
+    if(!listing){
+        req.flash("error","Listing Not Found!");
+        return res.redirect("/listings"); // after return it must come out of the function or it will go to the deleted listings again so error comes
+    }
     res.render("listings/show.ejs",{listing});
 }))
 
@@ -44,6 +48,7 @@ router.post("/",validateListing,wrapAsync( async(req,res)=>{
     let listing=req.body.listing;
     const newListing=new Listing(listing);
     await newListing.save();
+    req.flash("success","New Listing Created!");
     res.redirect("/listings")
     console.log(listing);
 }))
@@ -52,6 +57,10 @@ router.post("/",validateListing,wrapAsync( async(req,res)=>{
 router.get("/:id/edit",wrapAsync(async(req,res)=>{
     let {id}=req.params;
     const listing=await Listing.findById(id);
+    if(!listing){
+        req.flash("error","Listing Not Found!");
+        return res.redirect("/listings"); // after return it must come out of the function or it will go to the deleted listings again so error comes
+    }
     res.render("listings/edit.ejs",{listing});
 }))
 
@@ -59,6 +68,7 @@ router.get("/:id/edit",wrapAsync(async(req,res)=>{
 router.put("/:id",validateListing,wrapAsync(async(req,res)=>{
     let {id}=req.params;
     await Listing.findByIdAndUpdate(id,{...req.body.listing});
+    req.flash("success","Listing Updated!");
     res.redirect(`/listings/${id}`);
 }))
 
@@ -67,6 +77,7 @@ router.delete("/:id",wrapAsync(async(req,res)=>{
     let {id}=req.params;
     let deletedListing=await Listing.findByIdAndDelete(id);
     console.log(deletedListing);
+    req.flash("success","Listing Deleted!");
     res.redirect("/listings");
 }))
 
