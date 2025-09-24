@@ -7,10 +7,13 @@ const ejsMate=require("ejs-mate")
 const ExpressError=require("./utils/ExpressError")
 const session=require("express-session")
 const flash=require("connect-flash") // used to show some confirmation or error (only once)
+const passport=require("passport")
+const LocalStratergy=require("passport-local")
+const User=require("./models/user")
 
-
-const listings=require("./routes/listing")
-const reviews=require("./routes/review")
+const listingRouter=require("./routes/listing")
+const reviewRouter=require("./routes/review")
+const userRouter=require("./routes/user")
 
 const MONGO_URL="mongodb://127.0.0.1:27017/StaySphere";
 
@@ -50,6 +53,13 @@ const sessionOptions={
 app.use(session(sessionOptions))
 app.use(flash()) // always before the routes
 
+app.use(passport.initialize()) // to let the app know that a single user is accessing the different web pages
+app.use(passport.session())
+passport.use(new LocalStratergy(User.authenticate())); // to authenticate the user logging in the app
+
+passport.serializeUser(User.serializeUser()); // more like to maintain the user to stay till using the website
+passport.deserializeUser(User.deserializeUser());
+
 app.use((req,res,next)=>{
     res.locals.success=req.flash("success"); //locals is uswed to store in the local db and used to shoe the msg in index.js in views listing
     res.locals.error=req.flash("error"); //locals is uswed to store in the local db and used to shoe the msg in index.js in views listing
@@ -58,8 +68,9 @@ app.use((req,res,next)=>{
 })
 
 //moved to routes to reduce the crowd
-app.use("/listings",listings);
-app.use("/listings/:id/reviews",reviews);
+app.use("/listings",listingRouter);
+app.use("/listings/:id/reviews",reviewRouter);
+app.use("/",userRouter);
 
 /* check again ( "*" )*/
 /* app.all("*",(req,res,next)=>{
