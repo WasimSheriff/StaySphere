@@ -64,6 +64,7 @@ app.use((req,res,next)=>{
     res.locals.success=req.flash("success"); //locals is uswed to store in the local db and used to shoe the msg in index.js in views listing
     res.locals.error=req.flash("error"); //locals is uswed to store in the local db and used to shoe the msg in index.js in views listing
     /* console.log(res.locals.success); */
+    res.locals.currUser=req.user; // stores the curr logged in user for the accesing in the navbar 
     next();
 })
 

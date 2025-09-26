@@ -1,28 +1,16 @@
 const express=require("express");
 const router=express.Router({ mergeParams: true }) //visit this (to merge the parent and child routes p-/listings/:id/reviews c-/:reviewId)
 const wrapAsync=require("../utils/wrapAsync")
-const ExpressError=require("../utils/ExpressError")
-const {reviewSchema}=require("../schema")
 const Review=require("../models/review")
 const Listing=require("../models/listing")
-
-//Reviews
-
-//validate the review
-const validateReview=(req,res,next)=>{
-    let {error} = reviewSchema.validate(req.body);
-    if(error){
-        let errMsg=error.details.map((el)=>el.message).join(",");
-        throw new ExpressError(400,errMsg);
-    }else{
-        next();
-    }
-}
+const {validateReview,isLoggedIn, isReviewAuthor}=require("../middleware")
 
 //Post route
-router.post("/",validateReview,wrapAsync(async(req,res)=>{
+//need to be logged to give review
+router.post("/",isLoggedIn,validateReview,wrapAsync(async(req,res)=>{
     let listing=await Listing.findById(req.params.id);
     let newReview=new Review(req.body.review);
+    newReview.author=req.user._id; // onwer of th review
     listing.reviews.push(newReview);
     await newReview.save();
     await listing.save();
@@ -31,9 +19,9 @@ router.post("/",validateReview,wrapAsync(async(req,res)=>{
 }));
 
 //delete route
-router.delete("/:reviewId",wrapAsync(async(req,res)=>{
+router.delete("/:reviewId",isLoggedIn,isReviewAuthor,wrapAsync(async(req,res)=>{
     let {id,reviewId}=req.params;
-    Listing.findByIdAndUpdate(id,{$pull:{reviews:reviewId}});
+    await Listing.findByIdAndUpdate(id,{$pull:{reviews:reviewId}});
     await Review.findByIdAndDelete(reviewId);
     req.flash("success","Review Deleted!");
     res.redirect(`/listings/${id}`);

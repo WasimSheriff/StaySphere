@@ -14,6 +14,11 @@ const reviewSchema=new Schema({
         type:Date,
         default:Date.now(),
     },
+    author:{
+        type:Schema.Types.ObjectId,
+        ref:"User",
+    }
+    //assigning the creater of the review with the user model
 })
 
 module.exports=mongoose.model("Review",reviewSchema);
