@@ -10,9 +10,8 @@ const listingSchema=new Schema({
     },
     description:String,
     image:{
-        type:String,
-        default:"https://www.vectorstock.com/royalty-free-vectors/404-page-not-found-vectors",
-        set:v=>!v || v.trim()===""? "https://www.vectorstock.com/royalty-free-vectors/404-page-not-found-vectors":v,
+        url:String,
+        filename:String,
     },
     price:Number,
     location:String,

@@ -1,75 +1,44 @@
-const express=require("express");
-const router=express.Router()
-const wrapAsync=require("../utils/wrapAsync")
-const Listing=require("../models/listing")
-const {isLoggedIn,isOwner,validateListing}=require("../middleware")
+const express = require("express");
+const router = express.Router();
+const wrapAsync = require("../utils/wrapAsync");
+const { isLoggedIn, isOwner, validateListing } = require("../middleware");
+const listingController = require("../controllers/listings");
+const multer=require("multer") //get multipart form
+const {storage}=require("../cloudConfig")
+const upload=multer({storage}) // get the data from the multipart forms (for uploading of images) it stoes the images in itself created folder called uploads (before) now it saves in the cloudinary 
 
-router.get("/",wrapAsync( async (req,res)=>{
-    const allListings=await Listing.find({});
-    res.render("listings/index.ejs",{allListings});
-}))
+//simplyfying the readability by useing controllers(MVC) for all the routes
+// now usign router.route
+// single route multiple http calls (simplification)
 
-//new route
-router.get("/new",isLoggedIn,(req,res)=>{
-    res.render("listings/new.ejs")
-})
+//Index Route //post route
+router
+  .route("/")
+  .get(wrapAsync(listingController.index))
+  .post(isLoggedIn, upload.single("listing[image]"), validateListing, wrapAsync(listingController.addListing));
+  
 
-//show route
-router.get("/:id",wrapAsync( async(req,res)=>{
-    let {id}=req.params;
-    const listing=await Listing.findById(id).populate({path:"reviews",populate:{path:"author"},}).populate("owner"); // populate is used for shoeing all the reviews in the listing instead of the object Id both owner and review
-    // for the display of the author of the review
-    if(!listing){
-        req.flash("error","Listing Not Found!");
-        return res.redirect("/listings"); // after return it must come out of the function or it will go to the deleted listings again so error comes
-    }
-    console.log(listing);
-    res.render("listings/show.ejs",{listing});
-}))
+//new route //above :id or it will consider as :id/new
+router.get("/new", isLoggedIn, listingController.renderNewForm);
 
-//post route
-router.post("/",isLoggedIn,validateListing,wrapAsync( async(req,res)=>{
-    /* let {title,desc,...}=req.body can be written but for better code we use listing[price] like that (y coz listing object is alredy created in the form) */
-    /* if(!req.body){
-        throw new ExpressError(400,"Send valid data for listing!");
-    } 
-    before joi
-    */
-    let listing=req.body.listing;
-    const newListing=new Listing(listing);
-    newListing.owner=req.user._id; // mappin the owners with the listing
-    await newListing.save();
-    req.flash("success","New Listing Created!");
-    res.redirect("/listings")
-    console.log(listing);
-}))
+//show route //update route //delete route
+router
+  .route("/:id")
+  .get(wrapAsync(listingController.showListing))
+  .put(
+    isLoggedIn,
+    isOwner,
+    validateListing,
+    wrapAsync(listingController.updateListing)
+  )
+  .delete(isLoggedIn, isOwner, wrapAsync(listingController.deleteListing));
 
 //edit route    //is owner functions is used make only the owner edit delete update their listing --> it is middleware
-router.get("/:id/edit",isLoggedIn,isOwner,wrapAsync(async(req,res)=>{
-    let {id}=req.params;
-    const listing=await Listing.findById(id);
-    if(!listing){
-        req.flash("error","Listing Not Found!");
-        return res.redirect("/listings"); // after return it must come out of the function or it will go to the deleted listings again so error comes
-    }
-    res.render("listings/edit.ejs",{listing});
-}))
+router.get(
+  "/:id/edit",
+  isLoggedIn,
+  isOwner,
+  wrapAsync(listingController.editListing)
+);
 
-//update route
-router.put("/:id",isLoggedIn,isOwner,validateListing,wrapAsync(async(req,res)=>{
-    let {id}=req.params;
-    await Listing.findByIdAndUpdate(id,{...req.body.listing});
-    req.flash("success","Listing Updated!");
-    res.redirect(`/listings/${id}`);
-}))
-
-//delete route
-router.delete("/:id",isLoggedIn,isOwner,wrapAsync(async(req,res)=>{
-    let {id}=req.params;
-    let deletedListing=await Listing.findByIdAndDelete(id);
-    console.log(deletedListing);
-    req.flash("success","Listing Deleted!");
-    res.redirect("/listings");
-}))
-
-module.exports=router;
+module.exports = router;
