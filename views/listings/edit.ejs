@@ -2,7 +2,7 @@
 <div class="row mt-3">
     <div class="col-8 offset-2">
         <h3>Edit listing</h3>
-        <form method="POST" action="/listings/<%= listing._id %>?_method=PUT" novalidate class="needs-validation">
+        <form method="POST" action="/listings/<%= listing._id %>?_method=PUT" novalidate class="needs-validation" enctype="multipart/form-data">
             <div class="mb-3">
                 <label for="title" class="from-label">Title</label>
                 <input name="listing[title]" value="<%= listing.title %>" type="text" class="form-control" required>
@@ -13,11 +13,11 @@
                 <textarea name="listing[description]" class="form-control" required><%= listing.description %></textarea>      
                 <div class="valid-feedback">Nice!!</div>  
             </div>
+
+            <!-- showing of the old image came be shown via cloudinary query mods but no need as of now -->
             <div class="mb-3">
-                <label for="image" class="from-label">Image Link</label>
-                <input name="listing[image]" value="<%= listing.image%>" type="text" class="form-control" required>
-                <div class="invalid-feedback">Add The Image</div>
-                <div class="valid-feedback">Dayum!!</div>
+                <label for="image" class="from-label">Upload New Image!</label>
+                <input name="listing[image]" type="file" class="form-control">
             </div>
             <div class="row">
                 <div class="mb-3 col-4">

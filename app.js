@@ -10,6 +10,7 @@ const methodOverride=require("method-override")
 const ejsMate=require("ejs-mate")
 const ExpressError=require("./utils/ExpressError")
 const session=require("express-session")
+const MongoStore=require("connect-mongo")
 const flash=require("connect-flash") // used to show some confirmation or error (only once)
 const passport=require("passport")
 const LocalStratergy=require("passport-local")
@@ -17,9 +18,11 @@ const User=require("./models/user")
 
 const listingRouter=require("./routes/listing")
 const reviewRouter=require("./routes/review")
-const userRouter=require("./routes/user")
+const userRouter=require("./routes/user");
 
-const MONGO_URL="mongodb://127.0.0.1:27017/StaySphere";
+/* const MONGO_URL="mongodb://127.0.0.1:27017/StaySphere";*/
+const dbUrl=process.env.ATLASDB_URL; 
+/* BIG NONO NEVER EVER EVER add symbols in definingn the user */
 
 main()
 .then(()=>{
@@ -29,7 +32,7 @@ main()
 })
 
 async function main(){
-    await mongoose.connect(MONGO_URL)
+    await mongoose.connect(dbUrl)
 }
 
 app.set("view engine","ejs");
@@ -39,12 +42,26 @@ app.use(methodOverride("_method"));
 app.engine('ejs',ejsMate); // ejs boilreplate
 app.use(express.static(path.join(__dirname,"/public"))); // for accessing static files (css)
 
-app.get("/",(req,res)=>{
+/* app.get("/",(req,res)=>{
     console.log("Hi i am 2.0");
-})
+}) */
+
+//visit again
+const store=MongoStore.create({
+    mongoUrl:dbUrl,
+    crypto:{
+        secret:"mysupersecretcode",
+    },
+    touchAfter:24*60*60,
+});
+
+store.on("error",()=>{
+    console.log("ERROR IN MONGO STORE",err);
+});
 
 // to store old info of users for a while (research)
 const sessionOptions={
+    store,
     secret:"mysupersecretcode",
     resave:false,
     saveUninitialized:true,
@@ -54,6 +71,7 @@ const sessionOptions={
         httpOnly:true,
     }
 }
+
 app.use(session(sessionOptions))
 app.use(flash()) // always before the routes
 
